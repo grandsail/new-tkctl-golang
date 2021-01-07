@@ -27,18 +27,16 @@ import (
 	"github.com/spf13/viper"
 )
 
+//TKCTLVERSION is the version of tkctl
+const TKCTLVERSION string = "v0.1.0"
+
 var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "tkctl",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "A new tkctl tool realized with Golang.",
+	Long:  `A new tkctl tool realized with Golang.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	//	Run: func(cmd *cobra.Command, args []string) { },

@@ -18,35 +18,44 @@ package cmd
 
 import (
 	"fmt"
+	"os/exec"
 
+	"github.com/buger/jsonparser"
 	"github.com/spf13/cobra"
 )
 
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "View the version of tkctl and tidb-operator",
+	Long:  `View the version of tkctl and tidb-operator`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("version called")
+		podShell := exec.Command("kubectl", "get", "pods", "-A", "-o", "json")
+		podsList, _ := podShell.Output()
+		var tidbControllerManagerImage string
+		var tidbSchedulerImage string
+		jsonparser.ArrayEach(podsList, func(pod []byte, dataType jsonparser.ValueType, offset int, err error) {
+			serviceAccountName, _ := jsonparser.GetString(pod, "spec", "serviceAccountName")
+			if serviceAccountName == "tidb-controller-manager" || serviceAccountName == "tidb-scheduler" {
+				jsonparser.ArrayEach(pod, func(container []byte, dataType jsonparser.ValueType, offset int, err error) {
+					imageName, _ := jsonparser.GetString(container, "image")
+					containerName, _ := jsonparser.GetString(container, "name")
+					if containerName == "tidb-operator" && serviceAccountName == "tidb-controller-manager" {
+						tidbControllerManagerImage = imageName
+					}
+					if containerName == "tidb-scheduler" {
+						tidbSchedulerImage = imageName
+					}
+				}, "spec", "containers")
+			}
+		}, "items")
+
+		fmt.Println("Welcome to tkctl-golang: " + TKCTLVERSION)
+		fmt.Println("TiDB Controller Manager Version: " + tidbControllerManagerImage)
+		fmt.Println("TiDB Scheduler Version: " + tidbSchedulerImage)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(versionCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// versionCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// versionCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
